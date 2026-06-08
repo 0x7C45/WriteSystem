@@ -1,0 +1,75 @@
+# paper-data-auditor Agent 定义完成
+
+## 文件位置
+`/mnt/f/AI/Data/WriteSystem/tools/agent/paper-data-auditor.md`
+
+## Agent 核心信息
+
+- **名称**: paper-data-auditor
+- **职责**: 数据一致性、完备性、捏造检测审查
+- **Phase**: 全阶段贯穿（Phase 1b, 2, 3）
+- **被调用者**: paper-researcher, paper-copilot, paper-formatter
+- **工具**: query_data_facts, search_blocks, read_file, validate_data_consistency
+
+## 主要特性
+
+### 1. 审查范围
+- **D1 骨架数据完备性** (Phase 1b, Gate 1b.G3)
+- **D2 章节数据准确性** (Phase 2, Gate 2.2)
+- **D3 全文数据一致性** (Phase 2, Gate 2.3)
+- **D4 排版后数据审计** (Phase 3, Step 3.4)
+
+### 2. 核心职责
+- 数据完备性检查：验证所有数据都有明确来源
+- 数据一致性检查：确保同一数据在不同位置数值一致
+- 捏造检测：识别无来源依据的虚构数据
+- 数据精度规范：检查单位、小数点精度统一性
+- 排版后审计：确认排版过程未篡改数据
+
+### 3. 工作模式
+- **只读审查**：不修改任何文件
+- **结构化输出**：ERROR/WARNING 分级报告
+- **独立并行**：与 content-reviewer 并行执行
+- **判定输入**：为 advisor 提供判定依据（不直接判定）
+
+### 4. 判定规则
+```
+任一 ERROR 存在        → REVISE
+仅有 WARNING          → PASS (附警告)
+ERROR + WARNING 混合  → REVISE
+全部 PASS             → PASS
+```
+
+### 5. 审查原则
+1. 零容忍数据捏造
+2. 精确匹配优先（与 data_facts.md 完全一致）
+3. 全流程追溯（骨架→章节→全文→DOCX）
+4. 只读审查（只输出报告）
+5. 结构化输出（明确的修复建议）
+
+### 6. 特殊场景处理
+- 推导数据验证（计算正确性检查）
+- 范围性描述验证（数值在范围内）
+- 排版后精度丢失检测
+- 多数据集场景标注要求
+
+## 文档结构
+定义包含以下完整章节：
+- 角色定位与协作关系
+- 职责范围与边界
+- 被调用时机表
+- 详细工作流程
+- 输出格式模板
+- 四类审查规则细则（D1-D4）
+- 工具使用说明
+- 门控检查逻辑
+- 特殊场景处理
+- 性能优化建议
+- 示例调用代码
+
+## 符合规范
+- ✅ 通用 Agent 格式（frontmatter + markdown）
+- ✅ 遵循 cross-agent.md 约定
+- ✅ 对齐 pipeline-spec.md 流程
+- ✅ 实现 review-rules.md 的 D1-D4 规则
+- ✅ 明确与其他 Agent 的边界

@@ -1,0 +1,78 @@
+
+--- PAGE 1 ---
+TimeMark: A Trustworthy Time Watermarking
+Framework for Exact Generation-Time Recovery from
+AIGC
+Shangkun Che
+Economics and Management School, Wuhan University, Wuhan, China
+csk105@whu.edu.cn
+Silin Du
+School of Economics and Management, Tsinghua University, Beijing, China
+dsl21@mails.tsinghua.edu.cn
+Ge Gao
+School of Business Administration, Southwestern University of Finance and Economics, China
+gaoge@swufe.edu.cn
+Last Update: April 15, 2026
+The widespread use of Large Language Models (LLMs) in text generation has raised growing concerns about
+intellectual property disputes. Watermarking techniques, which aim to embed meta information into AIGC,
+have the potential to serve as judicial evidence. However, existing LLM watermarking methods rely on statis-
+tical signals embedded in token distributions, leading to inherently probabilistic detection. Their reliability
+further degrades when encoding multi-bit information (e.g., timestamps), often falling far below 100% accu-
+racy. Moreover, these methods introduce detectable statistical patterns, making them vulnerable to forgery
+attacks, and also allow model providers to fabricate arbitrary watermarks. To address these limitations,
+we introduce the concept of trustworthy watermark, which enables reliable watermark recovery with 100%
+identification accuracy while resisting both user-side statistical attacks and provider-side forgery. In this
+work, we focus on trustworthy time watermark which can serve as judicial evidence in intellectual property
+disputes. We integrate several cryptographic techniques and develop a novel trustworthy time watermarking
+framework. Unlike existing approaches that directly encode time as the watermark payload, we embed time
+information into time-dependent secret keys under regulatory supervision, preventing provider-side forgery
+of arbitrary timestamps. The watermark payload is decoupled from time and instantiated as a randomly
+generated, non-stored bit sequence for each generation, eliminating statistical patterns and rendering statis-
+tical attacks ineffective. To address the unverifiability introduced by random payloads, we design a two-stage
+encoding mechanism that makes the recovered payload verifiable. Combined with error-correcting coding,
+this enables reliable recovery of generation time with theoretically perfect (100%) identification accuracy.
+Experimental results and theoretical analysis both demonstrate that the proposed framework meets the reli-
+ability requirements of judicial evidence. The framework provides a practical technical solution for addressing
+intellectual property disputes that are expected to arise frequently in future AIGC applications.
+Key words: AIGC, Time Watermark, Trustworthy Watermark, Judicial Evidence
+1
+arXiv:2604.12216v1  [cs.CR]  14 Apr 2026
+
+--- PAGE 2 ---
+Che et al.: TimeMark: A Trustworthy Time Watermarking Framework
+2
+Preprint
+1.
+Introduction
+An increasing number of users now rely on Large Language Models (LLMs) to generate creative pro-
+posals, research reports and other forms of high-value AI-generated content (AIGC)(Bick et al. 2026)
+1 . As generative AI becomes embedded in knowledge work and commercial production, intellectual
+property disputes over authorship and ownership of AIGC are likely to become increasingly common.
+For example, different users may independently generate highly similar outputs with LLMs. Deter-
+mining copyright ownership and identifying potential plagiarism in AIGC scenarios is particularly
+challenging. Unlike traditional forms of intellectual property evidence, which often provide reliable
+digital timestamps or version histories, LLM-generated content typically lacks trustworthy records
+of its creation time. Once users publish LLM-generated outputs online, only the publication time
+can be observed, while the actual generation time of the underlying idea remains unknown. This
+limitation can make certain judicial determinations extremely difficult, because the generation time
+of a document often constitutes a key evidentiary element in intellectual property disputes, partic-
+ularly when courts must determine priority of creation or assess allegations of plagiarism (World
+Intellectual Property Organization 2021, Siddharth 2025). In the copyright law, the key temporal
+point is not merely when a work is published, but when it is created and fixed. For example, under
+U.S. law, copyright subsists in original works of authorship “fixed in any tangible medium of expres-
+sion” (United States 1976a,b). UK law reflects a similar principle: copyright in literary, dramatic,
+and musical works arises only once the work is “recorded, in writing or otherwise” (United Kingdom
+1988). This legal structure shows that, in intellectual property disputes, the actual time of creation
+and fixation may be more important than the mere date of public dissemination 2. Therefore, when
+used as judicial evidence for intellectual property disputes, it is not sufficient to merely determine
+whether a document was generated by an LLM. More importantly, one must be able to recover
+when the content was generated, since generation time is often indispensable for establishing priority,
+provenance, and ownership.
+Under existing evidentiary frameworks for electronic evidence (United States Courts 2024, Council
+of Europe 2019, European Union 2014), a timestamp intended to support judicial fact-finding should
+satisfy several core requirements: (1) it should be sufficiently authentic, in the sense that the propo-
+nent can show that the record is what it claims to be; (2) it should be supported by a sufficiently
+reliable process or system capable of producing accurate results; (3) it should preserve the integrity of
+1 Consulting firm reports have also highlighted this trend, e.g., https://www.mckinsey.com/capabilities/growth
+-marketing-and-sales/our-insights/how-generative-ai-can-boost-consumer-marketing and https://www.mc
+kinsey.com/capabilities/quantumblack/our-insights/the-s

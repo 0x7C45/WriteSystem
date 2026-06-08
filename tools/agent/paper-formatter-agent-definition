@@ -1,0 +1,145 @@
+# paper-formatter Agent 定义完成
+
+## 文件位置
+`/mnt/f/AI/Data/WriteSystem/tools/agent/paper-formatter.md`
+
+## 核心信息
+
+**Agent 元数据：**
+- **name**: paper-formatter
+- **version**: 1.0.0
+- **type**: agent
+- **phase**: 3
+- **职责**: 排版终审
+
+## 依赖关系
+
+**MCP 工具依赖（14个）：**
+- validate_markdown_structure
+- validate_assets
+- validate_word_count
+- validate_citations
+- validate_citation_order
+- build_reference_list
+- run_format_pipeline
+- apply_minimax_c2
+- apply_pandoc_templated
+- validate_docx_styles
+- validate_docx_sections
+- validate_docx_layout
+- validate_docx_fonts
+- validate_docx_references
+- assess_aigc_risk
+
+**Agent 依赖（3个）：**
+- paper-content-reviewer（终审内容质量审查）
+- paper-data-auditor（终审数据一致性审查）
+- paper-advisor（M4 里程碑审查）
+
+**Skill 依赖（1个）：**
+- anti-aigc（Phase 3.5 降AI处理，条件触发）
+
+## 工作流程
+
+### Step 3.1 - Markdown 就绪性检查（Gate 1a）
+**并行执行 4 项检查：**
+1. validate_markdown_structure - 标题层级、列表、代码块、表格
+2. validate_assets - 图片路径、格式、分辨率
+3. validate_word_count - 总字数、各章字数分布
+4. validate_citations - 引用完整性、编号连续性
+
+**输出**: 06_最终交付/Markdown就绪性报告.md
+
+### Step 3.2 - 引用生成与排序（Gate 1b）
+**串行执行：**
+1. 从引用注册表提取被引用文献
+2. build_reference_list 生成规范引用条目
+3. validate_citation_order 验证引用顺序
+4. 合并生成 正文草稿_含参考文献.md
+
+**输出**: 06_最终交付/正文草稿_含参考文献.md
+
+### Step 3.3 - 排版管道执行（100% 代码）
+**执行逻辑：**
+1. run_format_pipeline 执行排版
+   - 首选: apply_minimax_c2（minimax-docx C-2 排版链）
+   - Fallback: apply_pandoc_templated
+2. 分节、页眉页脚、目录生成、样式映射、图表嵌入
+
+**输出**: 
+- 06_最终交付/{论文标题}_终稿.docx
+- 06_最终交付/排版历程报告.md
+
+### Step 3.4 - DOCX 成品校验（Gate 2）
+**并行执行 5 项检查：**
+1. validate_docx_styles - 样式一致性
+2. validate_docx_sections - 分节符、页码
+3. validate_docx_layout - 边距、行距、页眉页脚
+4. validate_docx_fonts - 字体嵌入、中英文混排
+5. validate_docx_references - 参考文献格式
+
+### Step 3.5 - 终审
+**串行执行：**
+1. content-reviewer 审查（内容完整性、可读性、逻辑、学术规范）
+2. data-auditor 审查（数据完整性、格式、数值一致性）
+3. assess_aigc_risk AIGC 风险评估
+   - 综合分 < 0.40 → PASS
+   - 综合分 ≥ 0.40 → 触发 Phase 3.5 降AI处理
+
+**AIGC 高风险处理流程：**
+1. 触发 skills/anti-aigc/ 执行降AI
+2. 降AI完成后重新评估
+3. 更新终审报告
+
+**输出**: 06_最终交付/终审报告.md
+
+### Step 3.6 - 里程碑提交（Gate 3.M4）
+**paper-advisor M4 交付确认：**
+- 审查维度：排版质量、AIGC风险、最终完整性
+- 判定：PASS / REVISE / DISCUSS
+- PASS → 项目进入 REVIEW 状态
+
+**记录到**: 03_计划与方案/导师确认态.md
+
+## 输出产物
+
+**必须产物（5个）：**
+1. 06_最终交付/Markdown就绪性报告.md
+2. 06_最终交付/正文草稿_含参考文献.md
+3. 06_最终交付/{论文标题}_终稿.docx
+4. 06_最终交付/终审报告.md
+5. 06_最终交付/排版历程报告.md
+
+**条件产物（1个）：**
+- 06_最终交付/降AI处理报告.md（AIGC 高风险时）
+
+## 入口条件
+- Phase 2 完成
+- M3 = PASS
+- 05_撰写过程/正文草稿.md 存在
+- 00_订单信息/格式规范.md 存在
+- 01_格式模板/ 存在
+- 05_撰写过程/_引用编号注册表.md 存在
+- 04_参考文献/literature_cards/ 完整
+
+## 质量底线
+1. Markdown 就绪性检查任一项失败 → 禁止进入排版
+2. 引用完整性不通过 → 回到 Phase 1a 补充文献
+3. 引用顺序不通过 → 回到 Phase 2 修正注册表
+4. DOCX 校验任一项失败 → 修复后重新排版
+5. AIGC 风险分 ≥ 阈值 → 触发 Phase 3.5
+6. M4 ≠ PASS → 禁止进入 REVIEW 状态
+
+## 异常处理
+- 排版管道失败：C-2 失败自动切换 Pandoc，仍失败则标记「需人工介入」
+- DOCX 校验连续 3 次失败：提交 advisor 判定为 DISCUSS
+- 降AI 达到最大迭代次数（3 轮）仍未通过：提交 advisor 判定为 DISCUSS
+- 索引卡缺失：提交 literature-agent 补充，完成后从 Step 3.2 重新开始
+
+## 性能优化
+- Gate 1a 的 4 项检查并行执行
+- Gate 2 的 5 项 DOCX 校验并行执行
+- 结果缓存机制（基于 MD5）
+- 增量排版支持（如果 run_format_pipeline 支持）
+
+定义文档包含完整的工作流程图、使用示例（正常流程和 AIGC 高风险流程）、日志与追溯机制。

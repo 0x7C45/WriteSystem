@@ -1,0 +1,113 @@
+
+--- PAGE 1 ---
+Adversarial Paraphrasing: A Universal Attack for
+Humanizing AI-Generated Text
+Yize Cheng∗
+Vinu Sankar Sadasivan∗
+Mehrdad Saberi†
+Shoumik Saha†
+Soheil Feizi
+University of Maryland, College Park
+{yzcheng, vinu, msaberi, smksaha, sfeizi}@cs.umd.edu
+ Project: https://github.com/chengez/Adversarial-Paraphrasing
+Abstract
+The increasing capabilities of Large Language Models (LLMs) have raised con-
+cerns about their misuse in AI-generated plagiarism and social engineering. While
+various AI-generated text detectors have been proposed to mitigate these risks,
+many remain vulnerable to simple evasion techniques such as paraphrasing. How-
+ever, recent detectors have shown greater robustness against such basic attacks. In
+this work, we introduce Adversarial Paraphrasing, a training-free attack frame-
+work that universally humanizes any AI-generated text to evade detection more
+effectively. Our approach leverages an off-the-shelf instruction-following LLM
+to paraphrase AI-generated content under the guidance of an AI text detector,
+producing adversarial examples that are specifically optimized to bypass detection.
+Extensive experiments show that our attack is both broadly effective and highly
+transferable across several detection systems. For instance, compared to simple
+paraphrasing attack—which, ironically, increases the true positive at 1% false posi-
+tive (T@1%F) by 8.57% on RADAR and 15.03% on Fast-DetectGPT—adversarial
+paraphrasing, guided by OpenAI-RoBERTa-Large, reduces T@1%F by 64.49%
+on RADAR and a striking 98.96% on Fast-DetectGPT. Across a diverse set of
+detectors—including neural network-based, watermark-based, and zero-shot ap-
+proaches—our attack achieves an average T@1%F reduction of 87.88% under
+the guidance of OpenAI-RoBERTa-Large. We also analyze the tradeoff between
+text quality and attack success to find that our method can significantly reduce
+detection rates, with mostly a slight degradation in text quality. Our adversarial
+setup highlights the need for more robust and resilient detection strategies in the
+light of increasingly sophisticated evasion techniques.
+1
+Introduction
+Recent advancements in natural language generation have given rise to transformer-based Large
+Language Models (LLMs) such as GPT [23], Gemini [7], and LLaMA [21], which have demonstrated
+remarkable capabilities across a wide range of tasks, such as email composition and code generation.
+These models are capable of producing fluent, coherent text that can be difficult to distinguish from
+that written by humans. However, despite their impressive performance, LLMs also raise significant
+security and ethical concerns, including risks related to plagiarism and social engineering.
+To counter these risks, the development of reliable AI-generated text detection tools has become a
+critical research problem. Several works have proposed training neural network-based classifiers
+to address this challenge [10, 8, 26, 30, 34, 18]. Although typically weaker than trained detectors,
+∗Equal contribution
+†Equal contribution
+39th Conference on Neural Information Processing Systems (NeurIPS 2025).
+arXiv:2506.07001v2  [cs.CL]  29 Oct 2025
+
+--- PAGE 2 ---
+Apply Top-𝒌 & Top-𝒑 Masking
+Argentine
+happy
+look
+man
+footballer
+fish
+|𝑽𝒐𝒄𝒂𝒃| tokens
+Argentine
+man
+footballer
+≤|𝒌| tokens
+Append Candidate Tokens
+Paraphraser LLM
+60-year-old Argentine
+≤|𝒌| candidate texts
+60-year-old man
+60-year-old footballer
+AI Text Detector
+Choose the Candidate Text
+with Lowest AI Score
+𝐴𝐼 𝑠𝑐𝑜𝑟𝑒
+𝐴𝐼 𝑠𝑐𝑜𝑟𝑒
+𝐴𝐼 𝑠𝑐𝑜𝑟𝑒
+≤|𝒌| scores
+Adversarial Paraphrasing at iteration 𝒊 
+<System>: You are a rephraser. Given any input 
+text, you are supposed to rephrase the text…
+<User>: Bielsa, 60, a former Argentine and Chile 
+boss, resigned from French club Marseille…
+<Assistant>: 60-year-old
+iteration 𝒊 
+<System>: You are a rephraser. Given any input 
+text, you are supposed to rephrase the text…
+<User>: Bielsa, 60, a former Argentine and Chile 
+boss, resigned from French club Marseille…
+<Assistant>: 60-year-old man
+iteration 𝒊+ 𝟏 
+Figure 1: An overview of our universal and training-free framework for humanizing AI text. At
+every auto-regressive step of adversarial paraphrasing, using the guidance from an AI text detector,
+we search for the token with lowest “AI-score” from the set of top candidate tokens sampled by the
+paraphraser LLM. The token generation iterations continue until the paraphrasing is finished. (i.e.
+[EOS] token is sampled)
+various zero-shot detection techniques [22, 1, 6, 17] have also been introduced to reduce the overhead
+of training classifiers. Another propitious approach is watermarking LLMs, which enforces specific
+signatures in the output text to facilitate detection [2, 14, 16, 36, 4]. While these detection methods
+show promise in specific contexts, concerns about their robustness remain.
+Sadasivan et al. [28] and Krishna et al. [15] demonstrated how AI-generated text can be paraphrased
+by another AI model to evade detection by the existing AI detectors. The former also showed that
+recursively paraphrasing AI-generated content can be used to stress-test these systems and highlighted
+the fundamental difficulty of reliably detecting AI-generated text. These paraphrasing-based attacks
+aim to obscure the statistical patterns and artifacts that detection models typically rely on. However,
+more recent work suggests that some advanced detectors — especially those trained on paraphrased
+AI outputs [8] — may exhibit greater resilience to such evasion techniques. These developments
+naturally lead to a pressing question: “Is it possible to develop a universal attack framework that can
+consistently and effectively bypass these robust AI-generated text detectors with transferability to a
+wide variety of other detection systems?”
+In this paper, we introduce a universal, training-free framework for humanizing AI-generated text,
+a novel attack designed to effectively and efficiently rephrase AI-generated text to evade a wide
+range of detectors with grea

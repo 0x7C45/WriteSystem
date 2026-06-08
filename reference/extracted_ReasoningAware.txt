@@ -1,0 +1,136 @@
+
+--- PAGE 1 ---
+Reasoning-Aware AIGC Detection via Alignment and Reinforcement
+Zhao Wang1*, Max Xiong2*, Jianxun Lian3, Zhicheng Dou1
+1Gaoling School of Artificial Intelligence, Renmin University of China,
+2Duke University, 3Microsoft Research Asia,
+lilin22wz@gmail.com, jianxun.lian@outlook.com, dou@ruc.edu.cn
+Abstract
+The rapid advancement and widespread adop-
+tion of Large Language Models (LLMs) have
+elevated the need for reliable AI-generated con-
+tent (AIGC) detection, which remains challeng-
+ing as models evolve. We introduce AIGC-text-
+bank, a comprehensive multi-domain dataset
+with diverse LLM sources and authorship sce-
+narios, and propose REVEAL, a detection
+framework that generates interpretable reason-
+ing chains before classification. Our approach
+uses a two-stage training strategy: supervised
+fine-tuning to establish reasoning capabilities,
+followed by reinforcement learning to improve
+accuracy, improve logical consistency, and re-
+duce hallucinations. Extensive experiments
+show that REVEAL achieves state-of-the-art
+performance across multiple benchmarks, of-
+fering a robust and transparent solution for
+AIGC detection. The project is open-source
+at https://aka.ms/reveal
+1
+Introduction
+The rapid advancement of Large Language Models
+(LLMs) has ushered in an era where AI-generated
+content (AIGC) is increasingly pervasive and often
+indistinguishable from human writing. As mod-
+els approach human-level fluency and coherence
+(Achiam et al., 2023), the ability to reliably dis-
+cern machine-authored text becomes critical for
+maintaining integrity across numerous domains.
+Beyond academic publishing—where undisclosed
+AIGC threatens to undermine the authenticity of re-
+search papers and peer reviews (Perkins, 2023; Su
+et al., 2023)—AIGC detection is equally crucial in
+domains like telecommunications fraud prevention,
+where malicious actors deploy AI to impersonate
+humans (Ciancaglini et al., 2020). A robust, re-
+liable AIGC detector thus serves as an essential
+safeguard, enabling verification of authorship and
+upholding trust in digital communications.
+*Equal contribution.
+Existing approaches to AIGC detection have
+largely relied on statistical classifiers (Solaiman
+et al., 2019; Lavergne et al., 2008) or black-box
+neural models (Liu et al., 2019), which often ex-
+ploit surface-level patterns and struggle to gener-
+alize as LLMs evolve (Guo et al., 2023). While
+benchmarks such as M4 (Wang et al., 2024) and
+LOKI (Ye et al., 2025) have broadened the scope
+of evaluation, their data scale remains limited com-
+pared to real-world requirements and often fails
+to include outputs from the latest state-of-the-art
+models. In this work, we aim to consolidate and
+advance the field of AIGC detection by introducing
+a more comprehensive benchmark and a reasoning-
+driven detector that generalizes effectively to evolv-
+ing generative technologies.
+To support this goal, we construct AIGC-text-
+bank, a large-scale, multi-domain dataset that in-
+cludes authentic human writing, fully machine-
+generated (AI-Native) text, and human-authored
+text polished by AI (AI-Polish). Our corpus is
+sourced from 10 diverse domains and generated
+using 12 different LLMs—including the latest pro-
+prietary and open-weight models—providing a re-
+alistic and challenging testbed for detecting author-
+ship in both pure and hybrid scenarios. Its paral-
+lel structure ensures that each human reference is
+paired with AI-generated counterparts, enabling
+controlled comparisons and finer-grained analysis.
+We further introduce REVEAL (Reasoning-
+Enhanced Verification and Evaluation for AI Lan-
+guage), a novel framework that shifts detec-
+tion from opaque classification to transparent,
+reasoning-based decision-making. REVEAL is
+trained in two stages: first, supervised fine-tuning
+(SFT) initializes the model by distilling concise
+and effective rationales from OpenAI o3, serving
+as an imitation learning phase; then, reinforcement
+learning (RL) extends these capabilities by refining
+reasoning chains to improve logical consistency,
+reduce hallucinations, and ultimately surpass the
+arXiv:2604.19172v1  [cs.AI]  21 Apr 2026
+
+--- PAGE 2 ---
+teacher model’s performance. By explicitly model-
+ing the Think-then-Answer process, our approach
+not only achieves high accuracy but also provides
+interpretable evidence for each prediction. Exten-
+sive experiments across five benchmarks demon-
+strate that REVEAL outperforms existing black-
+box detectors and general-purpose LLMs in both
+binary and fine-grained settings, while maintain-
+ing strong generalization under domain shift and
+adversarial challenges.
+In summary, our contributions are threefold:
+• We construct and will release AIGC-text-bank,
+a large-scale, multi-domain dataset featuring
+state-of-the-art LLM outputs, providing a com-
+prehensive training resource as well as a bench-
+mark for AIGC detection research.
+• We propose REVEAL, a reasoning-driven de-
+tection framework that combines SFT and RL
+to produce accurate and interpretable authorship
+judgments.
+• We conduct extensive experiments showing that
+our method sets a new state of the art in gen-
+eralization and fine-grained discrimination, pro-
+viding a trustworthy foundation for real-world
+AIGC detection.
+2
+Methodology
+As LLMs rapidly advance, traditional AIGC
+detectors relying on superficial statistical cues
+(e.g., log-likelihood (Solaiman et al., 2019), en-
+tropy (Lavergne et al., 2008)) become increasingly
+inadequate, especially in complex, real-world sce-
+narios like AI-Polished content. To address this,
+we pursue three goals: developing an interpretable
+LLM-based detector that distinguishes AI from
+human text with reasoning; extending detection
+to differentiate AI-Native, AI-Polished, and Hu-
+man content; and enabling predictive uncertainty
+estimation. Our methodology constructs a compre-
+hensive, multi-scenario dataset and employs a two-
+stage training framework of supervised fine-tuning
+and reinforcement learning to build a detector ca-
+

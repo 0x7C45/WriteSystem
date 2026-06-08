@@ -1,0 +1,149 @@
+
+--- PAGE 1 ---
+AuthorMist: Evading AI Text Detectors with
+Reinforcement Learning
+Isaac David
+Arthur Gervais
+University College London
+Abstract
+In the age of powerful AI-generated text, auto-
+matic detectors have emerged to identify machine-
+written content. This poses a threat to author pri-
+vacy and freedom, as text authored with AI assis-
+tance may be unfairly flagged.
+We propose Au-
+thorMist, a novel reinforcement learning-based sys-
+tem to transform AI-generated text into human-
+like writing.
+AuthorMist leverages a 3-billion-
+parameter language model as a backbone, fine-
+tuned with Group Relative Policy Optimization
+(GPRO) to paraphrase text in a way that evades
+AI detectors.
+Our framework establishes a generic approach
+where external detector APIs (GPTZero, Win-
+stonAI, Originality.ai, etc.) serve as reward func-
+tions within the reinforcement learning loop, en-
+abling the model to systematically learn outputs
+that these detectors are less likely to classify as AI-
+generated.
+This API-as-reward methodology can
+be applied broadly to optimize text against any de-
+tector with an accessible interface.
+Experiments
+on multiple datasets and detectors demonstrate
+that AuthorMist effectively reduces the detectabil-
+ity of AI-generated text while preserving the origi-
+nal meaning. Our evaluation shows attack success
+rates ranging from 78.6% to 96.2% against individ-
+ual detectors, significantly outperforming baseline
+paraphrasing methods. AuthorMist maintains high
+semantic similarity (above 0.94) with the original
+text while successfully evading detection.
+These
+results highlight limitations in current AI text de-
+tection technologies and raise questions about the
+sustainability of the detection-evasion arms race.
+1
+Introduction
+The rise of large language models (LLMs) capa-
+ble of producing human-like text has led to in-
+creased use of AI assistants in writing. Students,
+content creators, and professionals now often rely
+on AI-generated drafts for efficiency.
+However,
+this has spurred the development of AI text de-
+tectors – tools that attempt to distinguish AI-
+written text from human-written text. Systems like
+GPTZero and WinstonAI claim high accuracy in
+flagging machine-generated content [27, 30]. Their
+widespread use in education and publishing poses
+a challenge to authorship privacy: an author who
+uses AI assistance might be unfairly scrutinized or
+penalized if their text is marked as “AI-generated.”
+This encroaches on author freedom and could dis-
+courage beneficial uses of AI in writing.
+Recent studies have shown that current detec-
+tors are far from foolproof.
+Detectors often rely
+on statistical signatures of AI text (e.g., likelihood
+under a language model or the presence of out-of-
+distribution tokens). Yet, even simple transforma-
+tions to the text can significantly degrade detec-
+tor performance. For example, adding extraneous
+spaces, introducing misspellings, or replacing char-
+acters with look-alike symbols can drop detection
+accuracy by over 30%. Paraphrasing the content in
+different words can often render AI-generated text
+“undetectable” to many models [20]. This cat-and-
+mouse dynamic highlights a need for robust meth-
+ods to evade detection, both to test detector relia-
+bility and to empower users to protect their privacy.
+In this paper, we introduce AuthorMist, a re-
+inforcement learning (RL) approach to automati-
+cally disguise AI-generated text as human-written.
+Rather than relying on crude text perturbations,
+AuthorMist learns a policy to paraphrase text into
+a more human-like style while preserving its mean-
+ing.
+We use RL with external AI detectors in a
+loop: the model is rewarded when the output text
+is rated as human-written by detectors. Over time,
+the model learns to produce texts that systemati-
+cally fool detectors into low “AI likelihood” scores.
+Our contributions are as follows:
+• We formulate the evasion of AI text detectors
+as a reinforcement learning problem. We pi-
+oneer a novel “API-as-reward” methodology,
+being the first to integrate external detector
+APIs directly into the reinforcement learning
+loop with Group Relative Policy Optimization
+(GRPO) [22] for NLP tasks.
+• Our system, AuthorMist, is designed and built
+on a 3B-parameter Transformer model fine-
+tuned with this innovative approach.
+1
+arXiv:2503.08716v1  [cs.CR]  10 Mar 2025
+
+--- PAGE 2 ---
+• We thoroughly evaluate AuthorMist on bench-
+mark datasets of AI-generated text. We test
+against popular blackbox detectors (GPTZero,
+WinstonAI, Originality.ai, Sapling) and pop-
+ular open-source models (HelloSimpleAI [8]
+and OpenAI’s Roberta Detector [25]). Results
+show AuthorMist dramatically reduces detec-
+tion rates compared to baseline AI text, out-
+performing conventional paraphrasers.
+2
+Background
+2.1
+AI Text Detectors and Adversar-
+ial Evasion
+The concern over machine-generated misinforma-
+tion and academic dishonesty has led to a prolif-
+eration of AI text detectors. These tools use vari-
+ous strategies to identify telltale signs of AI author-
+ship. Some detectors are neural classifiers trained
+on human vs. AI text examples (e.g., fine-tuned
+RoBERTa models), while others use statistical met-
+rics like entropy or perplexity (e.g., GLTR [5] and
+DetectGPT [16]).
+Commercial services such as
+GPTZero [27] and WinstonAI [30] combine multi-
+ple features and claim high accuracy and precision.
+For instance, GPTZero has been noted for its ro-
+bustness to character-level attacks, and WinstonAI
+advertises >99% accuracy on certain benchmarks.
+Perplexity,
+in particular,
+has emerged as a
+key statistical signature that differentiates AI-
+generated from human-written text. AI-generated
+content typically exhibits lower perplexity (higher
+predictability) than human writing, as language
+models tend to produce more statistically likely to-
+ken sequences. This predictability pattern is a com-
+mon detection vector that many AI text detectors
+exploit. Human writing, in contrast, often contains
+more surprising word choices 

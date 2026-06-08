@@ -1,0 +1,201 @@
+
+--- PAGE 1 ---
+SilverSpeak: Evading AI-Generated Text Detectors using
+Homoglyphs
+Aldan Creo
+Dublin, Ireland
+aldan.creo@rai.usc.es
+Shushanta Pudasaini
+Institute of Engineering (IOE)
+Kathmandu, Nepal
+shushanta574@gmail.com
+Abstract
+The advent of Large Language
+Models (LLMs) has enabled the
+generation of text that increasingly
+exhibits human-like characteristics.
+As the detection of such content is
+of significant importance, substan-
+tial research has been conducted
+with the objective of developing
+reliable AI-generated text detectors.
+These detectors have demonstrated
+promising results on test data, but
+recent research has revealed that they
+can be circumvented by employing
+different techniques. In this paper,
+we present homoglyph-based attacks
+(‘A’ →Cyrillic ‘A’) as a means of
+circumventing
+existing
+detectors.
+We
+conduct
+a
+comprehensive
+evaluation to assess the effectiveness
+of these attacks on seven detectors,
+including
+ArguGPT,
+Binoculars,
+DetectGPT,
+Fast-DetectGPT,
+Ghostbuster,
+OpenAI’s detector,
+and watermarking techniques, on
+five different datasets. Our findings
+demonstrate that homoglyph-based
+attacks can effectively circumvent
+state-of-the-art detectors,
+leading
+them to classify all texts as either
+AI-generated
+or
+human-written
+(decreasing the average Matthews
+Correlation Coefficient from 0.64 to
+-0.01). Through further examination,
+we extract the technical justification
+underlying the success of the attacks,
+which
+varies
+across
+detectors.
+Finally, we discuss the implications
+of
+these
+findings
+and
+potential
+defenses against such attacks.
+1
+Introduction
+LLMs have soared in popularity in a wide
+variety of domains as their text generation
+capabilities become increasingly human-
+like (Bin-Nashwan et al., 2023). For in-
+stance, it is estimated that the percent-
+age of arXiv articles whose abstract has
+been revised by ChatGPT is around 35%
+(GENG and Trotta, 2024). While LLMs
+can prove beneficial (Ngo, 2023), there
+is growing concern about their potential
+misuse (Sullivan et al., 2023; Yan et al.,
+2024; Li et al., 2023; Sebastian, 2023).
+Thus, a number of approaches to detect
+AI-generated text have been proposed, in-
+cluding zero-shot classifiers (Gehrmann
+et al., 2019; Mitchell et al., 2023; Bao
+et al., 2024; Hans et al., 2024; Su et al.,
+2023), binary classifiers (Solaiman et al.,
+2019; Verma et al., 2024; Liu et al., 2023),
+and watermarking techniques (Zhu et al.,
+2024; Giboulot and Teddy, 2024; Zhang
+and Koushanfar, 2024; Molenda et al.,
+2024; Wu et al., 2023).
+At the same time, research has been
+conducted on methods for circumventing
+AI-generated text detectors. Some popu-
+lar techniques include paraphrasing (Kr-
+ishna et al., 2023; Peng et al., 2023), wa-
+termark stealing (Jovanovi´c et al., 2024),
+Substitution-based In-Context example
+Optimization (Lu et al., 2024), reinforce-
+ment learning (Nicks et al., 2023) or space
+infiltration (Cai and Cui, 2023). In this
+paper, we study an alternative technique
+arXiv:2406.11239v3  [cs.CL]  20 Jan 2025
+
+--- PAGE 2 ---
+Dr. Capy Cosmos, a capybara unlike any
+other, astounded the scientific commu-
+nity with his groundbreaking. . .
+Dr.
+Capy Cosmos, a capubara unlike
+anu οther, astοunded the scientific com-
+munity with his groundbreakng. . .
+[9023, 13, 8171, 88, 84524, 11, 264,
+2107, 88, 25062, 20426, 904, 1023,
+11, 12025, 13382, 279, 12624, 4029,
+449, 813, 64955, 3495, 304, 12025,
+22761, 17688, 13, 3161, 813, . . . ]
+[9023, 13, 8171, 88, 84524, 11, 264,
+2107, 3865, 25062, 20426, 459, 3865,
+8008,
+123,
+700,
+11,
+12025,
+28654,
+37153, 279, 12624, 4029, 449, 813,
+5015, 1347, 1532, 587, 27385, . . . ]
+rewrite(text) →text′
+tokenize(text)
+tokenize(text′)
+Prediction: AI
+Prediction: Human
+Figure 1: Homoglyph-based attack. The left box shows the original text, adapted from (Hans
+et al., 2024), and the right box shows the text after rewriting some of its characters. The bottom
+boxes show the tokenized versions from (OpenAI, 2024b). Differences are shown in red.
+based on homoglyphs.
+Homoglyphs are visually similar
+characters with different encodings (e.g.,
+Latin ‘a’ and Cyrillic ‘a’) (Ginsberg and
+Yu, 2018). This allows us to generate
+rewritten versions of any given text that
+can evade AI-generated text detectors
+(Figure 1). Kirchenbauer et al. (2023)
+identified the usage of homoglyphs as a
+potential avenue for evading AI-generated
+text detectors. However, to the best of our
+knowledge, no study has yet conducted
+a comprehensive evaluation of the effec-
+tiveness of this approach across diverse
+datasets and detectors, nor has it provided
+insights into the technical justification of
+homoglyph-based attacks, a gap that we
+aim to fill in this paper.
+Our main contributions are:
+• What are homoglyph-based attacks?
+We introduce them as a way to evade
+AI-generated text detectors.
+• How much can homoglyph-based at-
+tacks affect AI-generated text detec-
+tors? We evaluate their effectiveness
+on five datasets and seven detectors
+in Section 2. In Section 3, we show
+that they can bring average Matthews
+Correlation Coefficients from 0.64
+to -0.01. This shows a complete eva-
+sion, discussed in Section 4.1.
+• Why do homoglyph-based attacks
+work? We analyze and justify such
+performance decline in Section 4.2.
+• What are the ethical implications of
+these findings? We discuss them in
+Section 6, along with possible de-
+fenses against such attacks.
+• Additionally,
+we
+introduce
+the
+first publicly available dataset of
+homoglyph-based attacks targeting
+AI-generated text detectors.
+2
+Methods
+In this section, we delineate our experi-
+mental approach, along with a description
+of the detectors and datasets employed.
+We make our code and datasets pub-
+licly available at https://github.com/
+ACMCMC/silverspeak, under CC BY-SA
+4.0 and ODC-BY licenses. Furthermore,
+we ensured that our study adheres to
+the intended usages of the detectors and
+datasets presented, for which we include
+licensing information below.
+2.1
+Experiments
+As shown in Figure 2, we evaluate the ef-
+fectiveness of homoglyph

@@ -1,0 +1,126 @@
+# paper-literature-agent Agent Definition
+
+## 创建完成
+
+已成功创建 `paper-literature-agent` Agent 定义文件：
+
+**文件路径**: `/mnt/f/AI/Data/WriteSystem/tools/agent/paper-literature-agent.md`
+
+---
+
+## Agent 元数据
+
+```yaml
+name: paper-literature-agent
+version: 1.0.0
+type: agent
+phase: 1a
+description: 文献检索与索引卡生成 Agent — 执行检索策略、获取文献、生成索引卡
+depends_on:
+  mcp-tools:
+    - get_literature_cards
+    - build_reference_list
+  review-agents:
+    - paper-content-reviewer
+```
+
+---
+
+## 核心职责
+
+1. **制定检索策略** — 中英文检索词、多源检索、时间范围设定
+2. **执行多源检索** — 知网/万方/百度学术/arXiv/Google Scholar/Semantic Scholar
+3. **获取全文** — PDF/CAJ，标记无法获取的文献
+4. **生成索引卡** — 结构化文献卡片（核心发现、研究方法、与本文关系）
+5. **构建汇总表** — 按年份、来源、章节的文献索引
+
+---
+
+## 工作流程（5步）
+
+### Step 1a.1 — 确定检索策略
+- 输入：订单摘要
+- 输出：`_检索策略.md`（检索词、检索源、筛选标准）
+- 门控：Gate 1a.1（content-reviewer 审查策略完整性）
+
+### Step 1a.2 — 执行检索
+- 多源检索 → 去重 → 初筛
+- 输出：`_候选文献列表.md`
+
+### Step 1a.3 — 获取全文
+- PDF 优先，CAJ 备用
+- 标记「仅有摘要」文献
+
+### Step 1a.4 — 生成索引卡
+- 逐篇阅读 → 提取核心信息 → 生成结构化卡片
+- 命名：`{作者}_{年份}.md`
+- 门控：Gate 1a.2（content-reviewer 审查卡片质量 + 数量底线）
+
+### Step 1a.5 — 生成汇总表
+- 输出：`_索引卡汇总.md`（统计 + 列表 + 按章节索引）
+
+---
+
+## 输出产物
+
+| 文件 | 路径 | 用途 |
+|------|------|------|
+| 检索策略 | `04_参考文献/literature_cards/_检索策略.md` | 记录检索过程 |
+| 候选列表 | `04_参考文献/literature_cards/_候选文献列表.md` | 去重后候选文献 |
+| 索引卡 | `04_参考文献/literature_cards/{作者}_{年份}.md` × N | 单篇文献卡片 |
+| 汇总表 | `04_参考文献/literature_cards/_索引卡汇总.md` | 全局索引 |
+
+---
+
+## 依赖关系
+
+### MCP 工具依赖
+- `get_literature_cards` — 供其他 Agent 读取索引卡
+- `build_reference_list` — 供 Phase 3 生成参考文献列表
+
+### 审查 Agent 依赖
+- `paper-content-reviewer` — Gate 1a.1 和 Gate 1a.2
+
+### 下游消费方
+- **Phase 1b (paper-researcher)** — Step 1b.1 文献综合分析
+- **Phase 2 (paper-copilot)** — 撰写时引用索引卡
+- **Phase 3 (paper-formatter)** — 生成参考文献列表
+
+---
+
+## 质量底线
+
+| 检查项 | 最低标准 | 不通过后果 |
+|--------|---------|-----------|
+| 索引卡数量 | 本科≥15 / 硕士≥30 / 博士≥50 / 期刊≥20 | 禁止进入 Phase 2 |
+| 索引卡完整性 | 核心发现、研究方法、与本文关系均有实质内容 | REVISE |
+| cite_key 唯一性 | 全局无重复 | 修复重复 |
+| 检索源覆盖 | 至少 3 中文源 + 2 英文源 | REVISE 检索策略 |
+
+---
+
+## 里程碑关联
+
+Phase 1a 产物参与 **M1 里程碑审查**（与 Phase 1b 共同）：
+- 审查方：`paper-advisor`
+- 审查内容：选题可行性 + **文献基础** + 资源可用性
+- 判定：PASS / REVISE / DISCUSS
+
+---
+
+## 并行执行
+
+Phase 1a 与 Phase 1b 并行：
+- Phase 1a 可独立启动（仅需订单摘要）
+- Phase 1b 的 Step 1b.1 需等待 Phase 1a 完成到 Step 1a.4
+
+---
+
+## 定义完整性
+
+✅ 包含所有 pipeline-spec.md Phase 1a 要求的步骤
+✅ 明确 MCP 工具依赖（get_literature_cards、build_reference_list）
+✅ 定义门控检查（Gate 1a.1、Gate 1a.2）
+✅ 规定输出产物格式（检索策略、索引卡、汇总表 Schema）
+✅ 质量底线与异常处理机制
+✅ 与其他 Phase 的同步关系

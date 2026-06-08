@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+.venv/
+venv/
+
+# Dotnet
+bin/
+obj/
+*.dll
+*.pdb
+*.deps.json
+*.runtimeconfig.json
+
+# 测试
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Agent 平台本地配置（不属于仓库）
+.opencode/
+.hermes/
+.claude/
+CLAUDE.md
+.cursorrules
+
+# IDE
+.obsidian/
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
+
+# 临时
+*~
+*.swp
+*.bak
+*.tmp
+
+#个人数据
+projects/*

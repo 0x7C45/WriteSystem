@@ -1,0 +1,83 @@
+
+--- PAGE 1 ---
+StealthRL: Reinforcement Learning Paraphrase Attacks
+for Multi-Detector Evasion of AI-Text Detectors
+Suraj Ranganath*
+Atharv Ramesh†
+University of California, San Diego
+Abstract
+AI-text detectors face a critical robustness challenge: adversarial paraphrasing attacks that preserve
+semantics while evading detection. We introduce StealthRL, a reinforcement learning framework that
+stress-tests detector robustness under realistic adversarial conditions. StealthRL trains a paraphrase
+policy against a multi-detector ensemble using Group Relative Policy Optimization (GRPO) with LoRA
+adapters on Qwen3-4B, optimizing a composite reward that balances detector evasion with semantic
+preservation. We evaluate six attack settings (M0–M5) on the full filtered MAGE test pool (15,310 human
+/ 14,656 AI) against four detectors: RoBERTa, Fast-DetectGPT, Binoculars, and MAGE. StealthRL
+achieves near-zero detection on three of the four detectors and a 0.024 mean TPR@1%FPR, reducing
+mean AUROC from 0.79 to 0.43 and attaining a 97.6% attack success rate. Critically, attacks transfer
+to two held-out detectors not seen during training, revealing shared architectural vulnerabilities rather
+than detector-specific brittleness. We additionally conduct LLM-based quality evaluation via Likert
+scoring on 500 matched samples per method, analyze detector score distributions to explain why evasion
+succeeds, and provide per-detector AUROC with bootstrap confidence intervals. Our results expose
+significant robustness gaps in current AI-text detection and establish StealthRL as a principled adversarial
+evaluation protocol. Code and evaluation pipeline are publicly available at https://github.com/
+suraj-ranganath/StealthRL; the released StealthRL model checkpoint is available at https:
+//huggingface.co/suraj-ranganath/StealthRL.
+1
+Introduction
+Large language models (LLMs) produce text that is increasingly indistinguishable from human writing,
+raising urgent concerns about academic integrity, misinformation, and content provenance [21]. In response,
+a growing ecosystem of AI-text detectors has been deployed in educational institutions, publishing platforms,
+and content moderation systems. These detectors span diverse architectures, from fine-tuned classifiers [21]
+to zero-shot statistical methods [15, 1] and paired-LM approaches [8], yet their robustness to adversarial
+manipulation remains poorly understood.
+Standard detector evaluations measure performance on clean distributions, where AI-generated text is
+presented without any evasion attempt. However, real-world adversaries are adaptive: they can iteratively
+refine paraphrases, query detector APIs, and exploit known weaknesses. This gap between clean-distribution
+evaluation and adversarial robustness is critical. A detector that achieves 95% accuracy on clean text may fail
+catastrophically when an attacker deliberately targets its decision boundary.
+The choice of operating point further complicates evaluation. Most prior work reports AUROC or
+accuracy at default thresholds, but deployed detectors must operate at low false positive rates (e.g., 1%
+*Corresponding author. suranganath@ucsd.edu
+†a3nair@ucsd.edu
+1
+arXiv:2602.08934v2  [cs.LG]  19 Mar 2026
+
+--- PAGE 2 ---
+FPR) to avoid falsely accusing human writers. At these strict operating points, the gap between clean and
+adversarial performance is even more pronounced, as detectors sacrifice recall to maintain precision.
+We introduce StealthRL, a reinforcement learning framework that systematically evaluates detector
+robustness under adaptive adversarial conditions. StealthRL trains a paraphrase policy against a multi-detector
+ensemble, using GRPO [17] with LoRA adapters [9] on Qwen3-4B-Instruct, to produce semantically faithful
+paraphrases that minimize detection confidence. By evaluating at the 1% FPR operating point and testing
+transfer to multiple held-out detectors, we provide a rigorous robustness assessment that complements
+standard benchmarks.
+Our contributions are as follows:
+• We implement black-box adaptive paraphrasing attacks via multi-detector RL training with semantic
+constraints, one of the first works to apply RL for adversarial detector evasion across multiple detector
+families simultaneously.
+• We demonstrate catastrophic robustness failure: 0.024 mean TPR@1%FPR across four detectors, with
+strong transfer to two held-out detectors.
+• We provide comprehensive analysis including detector score distributions (explaining why evasion suc-
+ceeds), LLM-based quality evaluation, and per-detector AUROC with bootstrap confidence intervals.
+• We establish an evaluation protocol measuring evasion, transfer, and fidelity at security-relevant operating
+points, and release complete training and evaluation code for reproducible robustness benchmarking at
+https://github.com/suraj-ranganath/StealthRL.
+2
+Related Work
+2.1
+AI-Text Detection Methods
+AI-text detection methods can be broadly categorized into three families. Fine-tuned classifiers train
+discriminative models on labeled human and AI text; the RoBERTa-based OpenAI detector [21] is a widely
+used example. Zero-shot statistical methods exploit properties of language model probability distributions
+without requiring labeled data. DetectGPT [15] uses probability curvature, while Fast-DetectGPT [1] achieves
+similar accuracy with substantially reduced computational cost via conditional probability curvature. Paired-
+LM detectors such as Binoculars [8] compare log-likelihoods across two language models to detect statistical
+anomalies. The MAGE benchmark [14] provides standardized evaluation data, while RAID [6] offers a
+shared benchmark for robust detector evaluation across domains and attacks.
+Despite diverse architectures, Sadasivan et al. [18] provide theoretical arguments that reliable detection
+may be fundamentally impossible as language models improve, motivating empirical robustness evaluation
+like ours.
+2.2
+Adversarial Attacks on Detectors
+Evasion attack

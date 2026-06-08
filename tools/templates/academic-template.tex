@@ -1,0 +1,70 @@
+\documentclass[12pt,a4paper]{ctexart}
+
+% ── 页面设置 ──────────────────────────────────────
+\usepackage[top=2.54cm, bottom=2.54cm, left=3.17cm, right=3.17cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing  % 1.5 倍行距
+
+% ── 字体设置 ──────────────────────────────────────
+\usepackage{fontspec}
+\setCJKmainfont{SimSun}[AutoFakeBold, AutoFakeSlant]  % 宋体
+\setCJKsansfont{SimHei}[AutoFakeBold, AutoFakeSlant]  % 黑体
+\setCJKmonofont{Times New Roman}
+
+% ── 标题格式 ──────────────────────────────────────
+\ctexsetsection{
+  \sectionfont{\zihao{\bfseries}}
+  \subsectionfont{\sihao{\bfseries}}
+  \subsubsectionfont{\xiaosi{\bfseries}}
+}
+
+% ── 段落格式 ──────────────────────────────────────
+\setlength{\parindent}{2em}  % 首行缩进 2 字符
+\setlength{\parskip}{0.5\baselineskip}
+
+% ── 图表 ──────────────────────────────────────────
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{caption}
+\captionsetup{font=small, labelsep=quad}
+
+% ── 超链接 ──────────────────────────────────────
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=black,
+  urlcolor=blue,
+}
+
+% ── 参考文献 ──────────────────────────────────────
+\usepackage[numbers,sort&compress,super=square,comma]{natbib}
+\bibliographystyle{plain}
+
+% ── 页码 ──────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{plain}
+\fancyhf{}
+\fancyhead[C]{\small\leftmark}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\begin{document}
+
+% ── 封面（按需启用） ─────────────────────────
+% \begin{titlepage}
+%   \centering
+%   \vspace*{3cm}
+%   {\LARGE\bfseries 论文标题}
+%   \vspace{2cm}
+%   {\large 作者姓名}
+%   \vspace{1cm}
+%   {\large 指导教师：XXX}
+%   \vspace{2cm}
+%   {\large \today}
+% \end{titlepage}
+
+% ── 正文开始 ─────────────────────────────────
+% 正文内容从外部 Markdown 转换后插入此处
+
+\end{document}

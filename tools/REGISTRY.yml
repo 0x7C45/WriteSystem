@@ -1,0 +1,254 @@
+# WriteSystem 工具清单 — 自动维护
+# 由 scripts/tool.sh 管理，勿手动编辑
+
+installed:
+  agents:
+    paper-literature-agent:
+      version: 1.0.0
+      installed: 2026-06-06
+      depends_on:
+        mcp-tools:
+          - get_literature_cards
+          - build_reference_list
+        agents:
+          - paper-content-reviewer
+      description: 文献检索与索引卡生成 Agent — 执行检索策略、获取文献、生成索引卡
+      phase: 1a
+      
+    paper-copilot:
+      version: 1.0.0
+      installed: 2026-06-06
+      depends_on:
+        mcp-tools:
+          - search_blocks
+          - query_data_facts
+          - validate_word_count
+          - validate_chapter_citations
+          - validate_citations
+        agents:
+          - paper-content-reviewer
+          - paper-data-auditor
+          - paper-advisor
+      description: 论文逐章撰写 Agent — 按骨架大纲逐段撰写，引用文献索引卡，查询数据事实，确保学术规范
+      phase: 2
+      
+    paper-formatter:
+      version: 1.0.0
+      installed: 2026-06-06
+      depends_on:
+        mcp-tools:
+          - validate_markdown_structure
+          - validate_assets
+          - validate_word_count
+          - validate_citations
+          - validate_citation_order
+          - build_reference_list
+          - run_format_pipeline
+          - apply_minimax_c2
+          - apply_pandoc_templated
+          - validate_docx_styles
+          - validate_docx_sections
+          - validate_docx_layout
+          - validate_docx_fonts
+          - validate_docx_references
+          - assess_aigc_risk
+        agents:
+          - paper-content-reviewer
+          - paper-data-auditor
+          - paper-advisor
+        skills:
+          - anti-aigc
+      description: 排版终审 Agent — 负责 Markdown 就绪性检查、引用生成、排版管道执行、DOCX 校验、终审与 AIGC 风险评估
+      phase: 3
+      
+    paper-advisor:
+      version: 1.0.0
+      installed: 2026-06-06
+      depends_on: {}
+      description: 论文撰写管线里程碑审查 Agent — 导师决策角色，负责 M1-M4 里程碑审查
+      phase: M1-M4
+      role: milestone_reviewer
+      authority: sole_approver
+      
+    paper-content-reviewer:
+      version: 1.0.0
+      installed: 2026-06-06
+      depends_on:
+        mcp-tools:
+          - validate_markdown_structure
+          - validate_citations
+          - validate_word_count
+      description: 逻辑、结构、范围、学术严谨性审查专家 — 跨阶段质量把关
+      phase: all
+      role: cross-phase-reviewer
+      
+    paper-data-auditor:
+      version: 1.0.0
+      installed: 2026-06-06
+      depends_on:
+        mcp-tools:
+          - query_data_facts
+          - search_blocks
+      description: 数据一致性、完备性、捏造检测审查 Agent
+      phase: all
+      role: data_auditor
+
+    paper-order-analyst:
+      version: 1.0.0
+      installed: 2026-06-06
+      depends_on:
+        mcp-tools:
+          - analyze_docx_template
+          - query_excel_data
+      description: 订单提炼 Agent — Phase 0，原始资料分类、格式规范提取、订单摘要生成、项目目录初始化
+      phase: 0
+
+    paper-researcher:
+      version: 1.0.0
+      installed: 2026-06-06
+      depends_on:
+        mcp-tools:
+          - search_blocks
+          - query_data_facts
+          - get_literature_cards
+        agents:
+          - paper-content-reviewer
+          - paper-data-auditor
+          - paper-advisor
+      description: 论文研究规划 Agent — 文献综合分析、研究方法选择、开题报告撰写、极细骨架规划
+      phase: 1b
+
+    thesis-chapter-stitcher:
+      version: 1.0.0
+      installed: 2026-06-06
+      depends_on: {}
+      description: 章节拼接 Agent — 从处理后的分片摘要建议章节拼接方案
+
+    thesis-ledger-auditor:
+      version: 1.0.0
+      installed: 2026-06-06
+      depends_on: {}
+      description: 论文账本审计 Agent — 审计论文账本、工作日志和派生报告
+
+    thesis-shard-rewriter:
+      version: 1.0.0
+      installed: 2026-06-06
+      depends_on: {}
+      description: 论文分片重写 Agent — 将单个论文分片改写为结构化候选版本
+
+    thesis-shard-validator:
+      version: 1.0.0
+      installed: 2026-06-06
+      depends_on: {}
+      description: 论文分片验证 Agent — 验证单个论文分片的 P5 和 P6 候选版本
+      
+  skills:
+    anti-aigc:
+      version: 2.0.0
+      installed: 2026-06-06
+      depends_on:
+        mcp-tools:
+          - assess_aigc_risk
+          - validate_citations
+          - validate_semantic_similarity
+        python-packages:
+          - sentence-transformers>=2.2.0
+          - spacy>=3.5.0
+          - scikit-learn>=1.2.0
+          - lexical-diversity>=0.1.0
+        external-apis:
+          - gptzero
+          - zerogpt
+          - originality_ai
+          - cnki_aigc (optional)
+      description: 降AI反检测处理管线 — 5阶段完整流程（检测、对抗Prompt、后处理、迭代优化、验证）
+      phase: 3.5
+      trigger: assess_aigc_risk 高风险
+      quality_targets:
+        ai_score_reduction: "> 20%"
+        semantic_fidelity: "> 0.85"
+        citation_integrity: "100%"
+        convergence_rate: "> 90% (3轮内)"
+      knowledge_base:
+        - knowledge/synonym_dict.json
+        - knowledge/ai_patterns.json
+        - knowledge/connector_variants.json
+        - knowledge/sentence_starters.json
+
+    paper-enhance:
+      version: 1.0.0
+      installed: 2026-06-06
+      depends_on:
+        agents:
+          - paper-copilot
+          - paper-content-reviewer
+          - paper-data-auditor
+      description: Phase 4.5 参考整合与跨章一致性审查 — 两个子阶段：参考资料整合（cascade propagation）+ 跨章一致性审查（7维度并行）
+      phase: 4.5
+      trigger: 用户追加外部参考资料 / copilot 合并正文后的一致性检查
+      usage: 可选
+
+    sci-diagram:
+      version: 1.0.0
+      installed: 2026-06-06
+      depends_on: {}
+      description: 科研图表生成工具 — 6类35种图表（流程图、架构图、概念图等），Mermaid + Graphviz 双引擎，MVP质量评价
+      phase: 2, 4.5
+      usage: 可选（论文需要科研图表时使用）
+
+    docx-preprocessor:
+      version: 1.0.0
+      installed: 2026-06-06
+      depends_on:
+        python-packages:
+          - python-docx
+      description: Phase 0 原始资料预处理工具 — 处理用户提供的乱格式 DOCX（格式诊断、标点修复、格式统一）
+      phase: 0
+      usage: 可选（当用户提供的原始资料格式混乱时使用）
+
+    minimax-docx:
+      version: 1.0.0
+      installed: 2026-06-06
+      depends_on: {}
+      description: DOCX 排版工具 — Phase 3 paper-formatter 使用
+      phase: 3
+      usage: 核心
+
+    minimax-pdf:
+      version: 1.0.0
+      installed: 2026-06-06
+      depends_on: {}
+      description: PDF 转换工具 — 可选的输出格式
+      phase: 3
+      usage: 可选
+  
+  mcp-servers:
+    paper-tools-mcp:
+      version: 0.1.0
+      installed: 2026-06-06
+      path: tools/mcp-servers/paper-tools-mcp
+      provides:
+        - validate_word_count
+        - validate_citations
+        - validate_chapter_citations
+        - validate_citation_order
+        - validate_markdown_structure
+        - validate_assets
+        - validate_docx_styles
+        - validate_docx_sections
+        - validate_docx_layout
+        - validate_docx_fonts
+        - validate_docx_references
+        - run_format_pipeline
+        - build_preflight_docx
+        - apply_minimax_c2
+        - apply_pandoc_templated
+        - get_literature_cards
+        - build_reference_list
+        - search_blocks
+        - query_data_facts
+        - assess_aigc_risk
+        - query_excel_data
+        - validate_excel_formulas
+        - analyze_docx_template
+      description: 论文工具 MCP Server — 校验、排版、检索、AIGC检测

@@ -1,0 +1,81 @@
+已创建 paper-copilot Agent 定义
+
+文件路径: /mnt/f/AI/Data/WriteSystem/tools/agent/paper-copilot.md
+
+## 核心信息
+
+- **名称**: paper-copilot
+- **版本**: v1.0.0
+- **阶段**: Phase 2 (逐章撰写)
+- **职责**: 按骨架大纲逐段撰写论文正文，管理引用，确保学术规范
+
+## 依赖的 MCP 工具
+
+1. **search_blocks** — 检索文献索引卡相关内容
+2. **query_data_facts** — 查询实验数据和统计结果
+3. **validate_word_count** — 校验章节/全文字数
+4. **validate_chapter_citations** — 校验章节引用格式和完整性
+5. **validate_citations** — 校验全文引用一致性
+
+## 工作流程 (5 步骤)
+
+### Step 2.1 章节计划确认
+- 提取本章段落要点
+- 列出引用文献和数据来源
+- Gate 2.1: content-reviewer 审查衔接性
+
+### Step 2.2 逐段撰写
+- 使用 search_blocks 检索索引卡内容
+- 使用 query_data_facts 查询数据
+- 撰写学术文本，标记 [cite_key] 引用
+- 保存到 05_撰写过程/第N章_{标题}.md
+
+### Step 2.3 更新引用注册表
+- 扫描本章所有 [cite_key]
+- 更新 05_撰写过程/_引用编号注册表.md
+- 确保全局引用编号一致
+
+### Step 2.4 用户确认 (可选)
+- 根据 interaction_level 决定是否需要
+- fine: 每章提交 | coarse: 关键章节 | minimal: 不需要
+
+### Step 2.5 章节合并
+- 拼接所有章节为 05_撰写过程/正文草稿.md
+- 确保章节/引用/图表编号连续
+- Gate 2.3: 全局检查
+- Gate 2.M3: paper-advisor 里程碑审查
+
+## 出口产物
+
+| 文件 | 内容 |
+|------|------|
+| 05_撰写过程/第N章_{标题}.md × N | 各章节终稿 |
+| 05_撰写过程/正文草稿.md | 合并后的完整草稿 |
+| 05_撰写过程/_引用编号注册表.md | 引用追踪表 |
+| 03_计划与方案/导师确认态.md | M3 判定记录 (追加) |
+
+## 质量底线 (不可跳过)
+
+- ✓ 章节字数在目标范围内 (±10%)
+- ✓ 所有引用有对应索引卡
+- ✓ 每节至少 1 个引用
+- ✓ 所有数据有来源记录
+- ✓ 全文字数达标 (±5%)
+- ✓ M3 审查 = PASS
+
+## 调用的审查 Agent
+
+- **paper-content-reviewer** — 逻辑、结构、学术严谨性
+- **paper-data-auditor** — 数据准确性、一致性
+- **paper-advisor** — M3 里程碑决策 (唯一批准者)
+
+## 状态转换
+
+```
+IDLE → CHAPTER_PLANNING → WRITING → UPDATE_REGISTRY 
+→ CHAPTER_REVIEW (循环所有章节)
+→ MERGING → GLOBAL_REVIEW → MILESTONE_REVIEW 
+→ PHASE_2_COMPLETE (进入 Phase 3)
+```
+
+定义文件已按照 WriteSystem 规范创建，包含完整的 frontmatter、工作流程、门控检查、出口产物和质量底线。

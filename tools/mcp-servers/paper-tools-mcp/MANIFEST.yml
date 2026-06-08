@@ -1,0 +1,37 @@
+name: paper-tools-mcp
+version: 0.1.0
+type: mcp-server
+description: 论文工具 MCP Server — 校验、排版、检索、AIGC
+provides:
+  tools:
+    - validate_word_count
+    - validate_citations
+    - validate_chapter_citations
+    - validate_citation_order
+    - validate_markdown_structure
+    - validate_assets
+    - validate_docx_styles
+    - validate_docx_sections
+    - validate_docx_layout
+    - validate_docx_fonts
+    - validate_docx_references
+    - run_format_pipeline
+    - build_preflight_docx
+    - apply_minimax_c2
+    - apply_pandoc_templated
+    - get_literature_cards
+    - build_reference_list
+    - search_blocks
+    - query_data_facts
+    - assess_aigc_risk
+    - query_excel_data
+    - validate_excel_formulas
+    - analyze_docx_template
+requires:
+  python: ">=3.11"
+  packages:
+    - mcp>=1.12.0
+    - python-docx>=1.1.0
+    - markdown>=3.4.0
+    - openpyxl>=3.1.0
+    - pandas>=2.0.0

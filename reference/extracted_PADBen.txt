@@ -1,0 +1,140 @@
+
+--- PAGE 1 ---
+PADBen: A Comprehensive Benchmark for Evaluating AI Text Detectors
+Against Paraphrase Attacks
+Yiwei Zha *,1, Rui Min *,1, Sushmita Shanu 1
+* Equal Contribution, 1 Khoury College of Computer Science, Northeastern University
+Abstract
+While AI-generated text (AIGT) detectors
+achieve over 90% accuracy on direct LLM
+outputs, they fail catastrophically against
+iteratively-paraphrased content.
+We investi-
+gate why iteratively-paraphrased text—itself
+AI-generated—evades detection systems de-
+signed for AIGT identification. Through intrin-
+sic mechanism analysis, we reveal that iterative
+paraphrasing creates an intermediate launder-
+ing region characterized by semantic displace-
+ment with preserved generation patterns, which
+brings up two attack categories: paraphrasing
+human-authored text (authorship obfuscation)
+and paraphrasing LLM-generated text (plagia-
+rism evasion).
+To address these vulnerabilities, we introduce
+PADBen, the first benchmark systematically
+evaluating detector robustness against both
+paraphrase attack scenarios.
+PADBen com-
+prises a five-type text taxonomy capturing the
+full trajectory from original content to deeply
+laundered text, and five progressive detection
+tasks across sentence-pair and single-sentence
+challenges.
+We evaluate 11 state-of-the-art
+detectors, revealing critical asymmetry: de-
+tectors successfully identify the plagiarism
+evasion problem but fail for the case of au-
+thorship obfuscation.
+Our findings demon-
+strate that current detection approaches can-
+not effectively handle the intermediate laun-
+dering region, necessitating fundamental ad-
+vances in detection architectures beyond exist-
+ing semantic and stylistic discrimination meth-
+ods. For detailed code implementation, please
+see https://github.com/JonathanZha47/PadBen-
+Paraphrase-Attack-Benchmark.
+1
+Introduction
+Large Language Models (LLMs) like GPT-5,
+Claude-4, and Gemini-2.5 have achieved near-
+human quality in text generation (OpenAI et al.,
+2024; Team et al., 2025; Kevian et al., 2024). While
+enabling unprecedented automation across creative
+and academic domains, AI-generated text (AIGT)
+poses significant risks through malicious applica-
+tions, including fabricating misinformation and au-
+tomating spam (Leite et al., 2023; Yeh et al., 2023).
+This has spurred development of robust systems
+to differentiate human-authored from machine-
+generated text (Dugan et al., 2024; Bhattacharjee
+and Liu, 2023).
+A diverse ecosystem of AI text detectors has
+emerged, falling into two categories: zero-shot de-
+tectors like FastDetectGPT (Bao et al., 2024), De-
+tectGPT (Mitchell et al., 2023), GLTR (Gehrmann
+et al., 2019), and Binoculars (Hans et al., 2024),
+which identify intrinsic statistical artifacts in syn-
+thetic text; and model-based detectors, including
+RADAR (Hu et al., 2023) and OpenAI’s RoBERTa
+classifier (Solaiman et al., 2019), fine-tuned on
+large datasets of human and AI content (Rezaei
+et al., 2024). Recent research indicates that propri-
+etary LLMs like GPT-4 and Qwen can be prompted
+to serve as effective detectors (Ji et al., 2025).
+Paraphrase attacks have emerged as the most
+effective evasion strategy. These attacks system-
+atically reword AI-generated content while pre-
+serving semantic meaning, effectively “laundering”
+synthetic text to appear human-authored (Krishna
+et al., 2023). Advanced techniques like recursive
+paraphrasing significantly reduce detection perfor-
+mance while maintaining text quality (Sadasivan
+et al., 2025). Unlike methods requiring deep techni-
+cal expertise, paraphrasing is easily executed, caus-
+ing state-of-the-art detectors’ accuracy to plummet
+to near-random performance, creating severe risks
+from education to information security (Weber-
+Wulff et al., 2023; Shportko and Verbitsky, 2025).
+The prevalence of paraphrase attacks has ex-
+posed critical inadequacies in current evaluation
+frameworks for AIGT detection robustness. While
+existing benchmarks like RAID (Dugan et al.,
+2024) provide comprehensive AIGT detection eval-
+uation, they employ only single-step Dipper-based
+paraphrasing without systematic robustness assess-
+1
+arXiv:2511.00416v1  [cs.CL]  1 Nov 2025
+
+--- PAGE 2 ---
+ment. Similarly, PARAPHRASUS (Michail et al.,
+2024) evaluates paraphrase identification across
+multiple models using Classify, Min, and Max chal-
+lenges on established NLP datasets. However, per-
+forming well on these challenges does not indicate
+robust adversarial defense, as these artificial scenar-
+ios focus on paraphrase detection rather than sys-
+tematic evaluation of detector vulnerabilities to iter-
+ative evasion attacks. Neither framework addresses
+the critical gap: assessing detector performance
+against realistic, multi-iteration paraphrase-based
+attacks.
+To address this gap, we introduce PADBen
+(Paraphrase Attack Detection Benchmark), the
+first comprehensive benchmark to systematically
+evaluate AI text detectors against paraphrase at-
+tacks. Through dual representation space analysis,
+we observe that iterative paraphrasing creates an
+“intermediate laundering region” where texts un-
+dergo semantic drift while preserving generation
+patterns—a mechanism creating detection blind
+spots in current binary classification paradigms.
+Based on this insight, we establish a five-type
+text taxonomy capturing the complete spectrum of
+authorship and paraphrasing dynamics: (1) Type 1
+- Human original text; (2) Type 2 - LLM-generated
+text; (3) Type 3 - Human-paraphrased original
+text; (4) Type 4 - LLM-paraphrased original text;
+and (5) Type 5 - Iteratively LLM-paraphrased
+LLM-generated text. Building upon this taxon-
+omy, PADBen introduces five progressive detec-
+tion tasks across two evaluation formats—single-
+sentence classification and sentence-pair recogni-
+tion—designed to reflect realistic adversarial con-
+ditions.
+Our key contributions are:
+1. We are the first to systematically investigate
+paraphrase attack mechanisms through dual
+representation space analysis. We reveal that
+iterat
